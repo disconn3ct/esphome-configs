@@ -1,0 +1,14 @@
+substitutions:
+  touch_debug: "true"
+  # https://community.home-assistant.io/t/esp-touch-threshold-too-close/427136/14
+  iir_filter: "15ms"
+  low_voltage_reference: "0.5V"
+  high_voltage_reference: "2.7V"
+  voltage_attenuation: "1.5V"
+
+esp32_touch:
+  setup_mode: "${touch_debug}"
+  iir_filter: "${iir_filter}"
+  low_voltage_reference: "${low_voltage_reference}"
+  high_voltage_reference: "${high_voltage_reference}"
+  voltage_attenuation: "${voltage_attenuation}"

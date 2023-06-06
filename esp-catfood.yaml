@@ -1,0 +1,25 @@
+substitutions:
+  devicename: "esp-catfood"
+  # ESP32
+  board: esp32cam
+
+  # Core
+  ota_password: !secret catfood_ota
+  api_key: !secret catfood_key
+
+  # Camera
+  fps: "10 fps"
+  resolution: 1024x768
+  jpeg_quality: "16"
+  agc_gain_ceiling: 128x
+  aec2: "true"
+  ae_level: "1"
+  brightness: "1"
+  saturation: "1"
+
+packages:
+  core: !include common/core.yaml
+  esp32: !include common/esp32.yaml
+  camera: !include common/espcam.yaml
+  wifi: !include common/wifi-iot.yaml
+  portal: !include common/portal.yaml

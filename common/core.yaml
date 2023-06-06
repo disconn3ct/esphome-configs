@@ -1,0 +1,60 @@
+# Parameters:
+substitutions:
+  devicename: "Unknown omg who am I even?"
+  api_key: "Invalid key"
+  log_level: DEBUG
+
+esphome:
+  name: "${devicename}"
+
+api:
+  encryption:
+    key: "${api_key}"
+
+ota:
+  password: "${ota_password}"
+
+logger:
+  level: "${log_level}"
+
+sensor:
+  # Reports the WiFi signal strength/RSSI in dB
+  - platform: wifi_signal
+    name: "WiFi Signal dB"
+    id: wifi_signal_db
+    update_interval: 60s
+    entity_category: "diagnostic"
+
+  # Reports the WiFi signal strength in %
+  - platform: copy
+    source_id: wifi_signal_db
+    name: "WiFi Signal Percent"
+    filters:
+      - lambda: return min(max(2 * (x + 100.0), 0.0), 100.0);
+    unit_of_measurement: "%"
+    entity_category: "diagnostic"
+
+text_sensor:
+  - platform: version
+    name: "${devicename} ESPHome Version"
+    entity_category: "diagnostic"
+  - platform: wifi_info
+    ssid:
+      name: "${devicename} WiFi"
+  - platform: template
+    name: "ESPHome Platform"
+    lambda: |-
+      return {"$framework"};
+    entity_category: "diagnostic"
+
+button:
+  - platform: safe_mode
+    name: "Safe Mode Boot"
+    entity_category: diagnostic
+  - platform: restart
+    name: Restart
+    entity_category: diagnostic
+
+binary_sensor:
+  - platform: status
+    name: "${devicename} Connection Status"

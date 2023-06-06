@@ -1,0 +1,34 @@
+substitutions:
+  devicename: "esp-plantcam"
+
+  # ESP32
+  board: esp32cam
+
+  # Core
+  ota_password: !secret plantcam_ota
+  api_key: !secret plantcam_key
+
+  # Wifi
+  reboot_timeout: 5min
+
+  # Camera
+  resolution: 1280x1024
+  jpeg_quality: "12"
+  agc_gain_ceiling: 64x # 2x # 32x # 64x # 128x
+  aec2: "true"
+  ae_level: "1"
+  brightness: "1"
+  saturation: "1"
+
+packages:
+  core: !include common/core.yaml
+  esp32: !include common/esp32.yaml
+  camera: !include common/espcam.yaml
+  wifi: !include common/wifi-iot.yaml
+  portal: !include common/portal.yaml
+
+esp32_camera_web_server:
+  - port: 8080
+    mode: stream
+  - port: 8081
+    mode: snapshot

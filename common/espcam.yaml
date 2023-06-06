@@ -1,0 +1,83 @@
+substitutions:
+  fps: "1 fps"
+  idle_fps: "1 fps"
+  resolution: "640x480"
+  jpeg_quality: "10"
+  #  agc_gain_ceiling (Optional, enum): The maximum gain allowed, when agc_mode is set to auto. This parameter seems act as “ISO” setting. Defaults to 2x.
+  #  2x: Camera is less sensitive, picture is clean (without visible noise)
+  #  4x, 8x, 16x, 32x, 64x
+  # 128x: Camera is more sensitive, but picture contain lot of noise
+  agc_gain_ceiling: "32x"
+  agc_mode: "auto"
+  aec2: "false"
+  ae_level: "0"
+  contrast: "0"
+  brightness: "0"
+  saturation: "0"
+  horizontal_mirror: "true"
+  vertical_flip: "true"
+
+# https://esphome.io/components/esp32_camera.html
+# For debugging:
+#i2c:
+#  sda: 26
+#  scl: 27
+#  scan: true
+#  id: bus_a
+#switch:
+#  - platform: gpio
+#    id: powercam
+#    pin:
+#      number: 25
+#      inverted: true
+
+esp32_camera:
+  name: "${devicename}"
+  external_clock:
+    pin: GPIO0
+    frequency: 20MHz
+  i2c_pins:
+    sda: GPIO26
+    scl: GPIO27
+  data_pins: [GPIO5, GPIO18, GPIO19, GPIO21, GPIO36, GPIO39, GPIO34, GPIO35]
+  vsync_pin: GPIO25
+  href_pin: GPIO23
+  pixel_clock_pin: GPIO22
+  power_down_pin: GPIO32
+
+  max_framerate: "${fps}"
+  idle_framerate: "${idle_fps}"
+  resolution: "${resolution}"
+  vertical_flip: "${vertical_flip}"
+  horizontal_mirror: "${horizontal_mirror}"
+  jpeg_quality: "${jpeg_quality}"
+
+  agc_gain_ceiling: "${agc_gain_ceiling}"
+  agc_mode: "${agc_mode}"
+  aec2: "${aec2}"
+  contrast: "${contrast}"
+  brightness: "${brightness}"
+  saturation: "${saturation}"
+  ae_level: "${ae_level}"
+
+output:
+  - platform: ledc
+    pin: GPIO4
+    id: gpio_4
+    channel: 2
+  - platform: gpio
+    pin:
+      number: GPIO33
+      inverted: True
+    id: gpio_33
+
+light:
+  - platform: monochromatic
+    output: gpio_4
+    name: "${devicename} light"
+    id: camera_flash
+    default_transition_length: 250ms
+    restore_mode: ALWAYS_OFF
+  - platform: binary
+    output: gpio_33
+    name: "${devicename} status"

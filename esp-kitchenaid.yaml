@@ -1,0 +1,15 @@
+# The small ear in the kitchen
+substitutions:
+  devicename: "esp-kitchenaid"
+  # ESP32
+  board: wemos_d1_mini32
+  framework: esp-idf
+
+  ota_password: !secret kitchenaid_ota
+  api_key: !secret kitchenaid_key
+
+packages:
+  core: !include common/core.yaml
+  esp32: !include common/esp32.yaml
+  pawscout: !include common/pawscout.yaml
+  wifi: !include common/wifi-iot.yaml

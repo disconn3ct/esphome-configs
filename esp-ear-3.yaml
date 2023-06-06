@@ -1,0 +1,14 @@
+substitutions:
+  devicename: "esp-ear-3"
+  framework: esp-idf
+  fast_connect: "false"
+  reboot_timeout: 2min
+
+  ota_password: !secret ear_v3_ota
+  api_key: !secret ear_v3_key
+
+packages:
+  core: !include common/core.yaml
+  esp32: !include common/esp32.yaml
+  pawscout: !include common/pawscout.yaml
+  wifi: !include common/wifi-iot.yaml

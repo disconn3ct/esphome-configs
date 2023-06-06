@@ -1,0 +1,19 @@
+substitutions:
+  devicename: "Unknown omg who am I even?"
+  lrclk_pin: "GPIO26"
+  bclk_pin: "GPIO27"
+  mode: "mono"
+  dout_pin: "GPIO23"
+  speaker_name: "${devicename} speaker"
+
+i2s_audio:
+  i2s_lrclk_pin: "${lrclk_pin}"
+  i2s_bclk_pin: "${bclk_pin}"
+
+media_player:
+  - platform: i2s_audio
+    name: "${speaker_name}"
+    icon: mdi:cast-audio
+    dac_type: external
+    i2s_dout_pin: "${dout_pin}"
+    mode: "${mode}"

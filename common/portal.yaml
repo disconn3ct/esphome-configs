@@ -1,0 +1,12 @@
+# Parameters:
+substitutions:
+  devicename: "Unknown omg who am I even?"
+  wifi_fallback_password: !secret wifi_fallback_password
+
+# Enables the fallback hotspot
+wifi:
+  ap:
+    ssid: "${devicename} Config"
+    password: "${wifi_fallback_password}"
+
+captive_portal:

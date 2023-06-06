@@ -1,0 +1,15 @@
+substitutions:
+  touch_icon: "mdi:bed"
+  touch_device_class: "occupancy"
+  touch_sense_delay: "1s"
+
+binary_sensor:
+  - platform: esp32_touch
+    name: "${touch_name}"
+    pin: "${touch_pin}"
+    threshold: "${touch_threshold}"
+    id: "${touch_id}"
+    device_class: "${touch_device_class}"
+    icon: "${touch_icon}"
+    filters: &filters
+      - delayed_on_off: "${touch_sense_delay}"

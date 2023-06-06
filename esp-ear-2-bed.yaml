@@ -1,0 +1,75 @@
+# https://amzn.to/3W023pe + https://amzn.to/3BlJhzk
+substitutions:
+  devicename: "esp-ear-2-bed"
+
+  # Core
+  ota_password: !secret ear_v2_ota
+  api_key: !secret ear_v2_key
+
+  # Local
+  touch_debug: "false" # setup_mode
+  sense_delay: "5s"
+  touch_icon: "mdi:bed"
+
+  # https://community.home-assistant.io/t/esp-touch-threshold-too-close/427136/14
+  iir_filter: "15ms"
+  low_voltage_reference: "0.5V"
+  high_voltage_reference: "2.7V"
+  voltage_attenuation: "1.5V"
+
+binary_sensor:
+  - platform: template
+    name: "Bed Sensor"
+    device_class: occupancy
+    icon: "mdi:bed"
+    lambda: |-
+      if (id(top_left).state
+          || id(mid_left).state
+          || id(bottom_left).state
+        ) {
+        return true;
+      } else {
+        return false;
+      }
+  - platform: template
+    name: "Left Sensor"
+    device_class: occupancy
+    icon: "mdi:bed"
+    lambda: |-
+      if (id(top_left).state
+          || id(mid_left).state
+          || id(bottom_left).state
+        ) {
+        return true;
+      } else {
+        return false;
+      }
+
+packages:
+  core: !include common/core.yaml
+  esp32: !include common/esp32.yaml
+  pawscout: !include common/pawscout.yaml
+  wifi: !include common/wifi-iot.yaml
+  portal: !include common/portal.yaml
+  touch: !include common/touch.yaml
+  top_left: !include
+    file: common/touchpin.yaml
+    vars:
+      touch_name: "Top Left"
+      touch_pin: "GPIO14"
+      touch_threshold: "13"
+      touch_id: top_left
+  mid_left: !include
+    file: common/touchpin.yaml
+    vars:
+      touch_name: "Mid Left"
+      touch_pin: "GPIO33"
+      touch_threshold: "13"
+      touch_id: mid_left
+  bottom_left: !include
+    file: common/touchpin.yaml
+    vars:
+      touch_name: "Bottom Left"
+      touch_pin: "GPIO15"
+      touch_threshold: "13"
+      touch_id: bottom_left

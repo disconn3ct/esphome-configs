@@ -1,0 +1,27 @@
+substitutions:
+  devicename: "esp-coffee-v4"
+  # ESP32
+  board: wemos_d1_mini32
+  framework: esp-idf # Doesn't support captive portal :headdesk:
+
+  # Core
+  ota_password: !secret coffee_v3_ota
+  api_key: !secret coffee_v3_key
+
+output:
+  - platform: gpio
+    id: out
+    pin: GPIO2
+    inverted: true
+
+button:
+  - platform: output
+    output: out
+    duration: 250ms
+    name: "coffee maker"
+
+packages:
+  core: !include common/core.yaml
+  esp32: !include common/esp32.yaml
+  pawscout: !include common/pawscout.yaml
+  wifi: !include common/wifi-iot.yaml

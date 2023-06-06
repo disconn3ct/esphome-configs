@@ -1,0 +1,13 @@
+substitutions:
+  devicename: "plantdog"
+  board: esp-wrover-kit
+  framework: esp-idf
+
+  ota_password: !secret plantdog_ota
+  api_key: !secret plantdog_key
+
+packages:
+  core: !include common/core.yaml
+  esp32: !include common/esp32.yaml
+  wifi: !include common/wifi-iot.yaml
+  pawscout: !include common/pawscout.yaml

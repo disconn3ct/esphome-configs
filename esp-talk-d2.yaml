@@ -1,0 +1,13 @@
+substitutions:
+  devicename: "esp-talk-d2"
+  board: wemos_d1_mini32
+  reboot_timeout: 2min
+  ota_password: !secret talk_d2_ota
+  api_key: !secret talk_d2_key
+
+packages:
+  core: !include common/core.yaml
+  esp32: !include common/esp32.yaml
+  speaker: !include common/speaker.yaml
+  wifi: !include common/wifi-public.yaml
+  portal: !include common/portal.yaml

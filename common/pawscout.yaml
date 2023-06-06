@@ -1,0 +1,44 @@
+substitutions:
+  devicename: "Unknown omg who am I even?"
+  pawscout_uuid: !secret pawscout_uuid
+  petname: !secret petname
+
+esphome:
+  includes:
+    # https://github.com/rpatel3001/BleDistance/
+    - custom_components/lib/OneEuro.h
+    - custom_components/ble_dist.h
+  on_boot:
+    then:
+      lambda: |-
+        addTracker("PawScout", "$pawscout_uuid");
+
+logger:
+  logs:
+    esp32_ble_tracker: INFO
+
+# https://esphome.io/components/esp32_ble_tracker.html
+esp32_ble_tracker:
+  scan_parameters:
+    active: true
+  on_ble_advertise:
+    then:
+      - lambda: |-
+          parseAdvertisement(x);
+
+# https://esphome.io/components/bluetooth_proxy.html
+bluetooth_proxy:
+  active: true
+
+sensor:
+  - platform: template
+    name: "${petname}-Pawscout-Distance-${devicename}"
+    id: pawscout_dist
+    update_interval: 30s
+    unit_of_measurement: "ft"
+    device_class: ""
+    state_class: "measurement"
+    accuracy_decimals: 1
+    #entity_category: "diagnostic"
+    lambda: |-
+      return getTracker("PawScout").get_dist();
