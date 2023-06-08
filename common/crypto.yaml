@@ -1,0 +1,6 @@
+substitutions:
+  api_key: "Invalid key"
+
+api:
+  encryption:
+    key: "${api_key}"

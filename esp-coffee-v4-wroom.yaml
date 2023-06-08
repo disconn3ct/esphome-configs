@@ -22,6 +22,7 @@ button:
 
 packages:
   core: !include common/core.yaml
+  crypto: !include common/crypto.yaml
   esp32: !include common/esp32.yaml
   pawscout: !include common/pawscout.yaml
   wifi: !include common/wifi-iot.yaml

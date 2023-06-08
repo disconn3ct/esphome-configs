@@ -1,15 +1,12 @@
 # Parameters:
 substitutions:
   devicename: "Unknown omg who am I even?"
-  api_key: "Invalid key"
   log_level: DEBUG
 
 esphome:
   name: "${devicename}"
 
 api:
-  encryption:
-    key: "${api_key}"
 
 ota:
   password: "${ota_password}"
