@@ -26,10 +26,6 @@ esp32_ble_tracker:
       - lambda: |-
           parseAdvertisement(x);
 
-# https://esphome.io/components/bluetooth_proxy.html
-bluetooth_proxy:
-  active: true
-
 sensor:
   - platform: template
     name: "${petname}-Pawscout-Distance-${devicename}"
@@ -40,5 +36,6 @@ sensor:
     state_class: "measurement"
     accuracy_decimals: 1
     #entity_category: "diagnostic"
+    icon: "mdi:signal-distance-variant"
     lambda: |-
       return getTracker("PawScout").get_dist();

@@ -1,0 +1,4 @@
+# https://esphome.io/components/bluetooth_proxy.html
+bluetooth_proxy:
+  active: true
+
