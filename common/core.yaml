@@ -42,6 +42,7 @@ text_sensor:
     name: "ESPHome Platform"
     lambda: |-
       return {"$framework"};
+    update_interval: never
     entity_category: "diagnostic"
 
 button:
@@ -55,3 +56,4 @@ button:
 binary_sensor:
   - platform: status
     name: "${devicename} Connection Status"
+

@@ -1,4 +1,5 @@
 substitutions:
+  # Hydro-tower
   devicename: "esp-cam-test1"
 
   # ESP32
@@ -15,7 +16,7 @@ substitutions:
   agc_gain_ceiling: 128x
   aec2: "true"
   ae_level: "1"
-  brightness: "1"
+  brightness: "0"
   saturation: "2"
 
 packages:

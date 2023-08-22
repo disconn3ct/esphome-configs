@@ -1,0 +1,26 @@
+sensor:
+  - platform: template
+    name: "${petname}-Pawscout-0-Distance-${devicename}"
+    id: pawscout_dist_0
+    update_interval: 30s
+    unit_of_measurement: "ft"
+    device_class: ""
+    state_class: "measurement"
+    accuracy_decimals: 1
+    entity_category: "diagnostic"
+    icon: "mdi:signal-distance-variant"
+    lambda: |-
+      return getTracker("PawScout-0").get_dist();
+  - platform: template
+    name: "${petname}-Pawscout-1-Distance-${devicename}"
+    id: pawscout_dist_1
+    update_interval: 30s
+    unit_of_measurement: "ft"
+    device_class: ""
+    state_class: "measurement"
+    accuracy_decimals: 1
+    entity_category: "diagnostic"
+    icon: "mdi:signal-distance-variant"
+    lambda: |-
+      return getTracker("PawScout-1").get_dist();
+

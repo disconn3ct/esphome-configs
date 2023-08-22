@@ -1,6 +1,8 @@
 substitutions:
   devicename: "Unknown omg who am I even?"
-  pawscout_uuid: !secret pawscout_uuid
+  pawscout_uuid_0: !secret pawscout_uuid_0
+  pawscout_uuid_1: !secret pawscout_uuid_1
+
   petname: !secret petname
 
 esphome:
@@ -11,7 +13,8 @@ esphome:
   on_boot:
     then:
       lambda: |-
-        addTracker("PawScout", "$pawscout_uuid");
+        addTracker("PawScout-0", "$pawscout_uuid_0");
+        addTracker("PawScout-1", "$pawscout_uuid_1");
 
 logger:
   logs:
@@ -38,4 +41,5 @@ sensor:
     #entity_category: "diagnostic"
     icon: "mdi:signal-distance-variant"
     lambda: |-
-      return getTracker("PawScout").get_dist();
+      return std::min(getTracker("PawScout-0").get_dist(), getTracker("PawScout-1").get_dist());
+

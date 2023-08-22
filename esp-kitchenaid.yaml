@@ -15,3 +15,4 @@ packages:
   bluetooth: !include common/bluetooth.yaml
   pawscout: !include common/pawscout.yaml
   wifi: !include common/wifi-iot.yaml
+

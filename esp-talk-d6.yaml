@@ -1,9 +1,12 @@
 substitutions:
-  devicename: "esp-talk-d2"
-  board: wemos_d1_mini32
+  devicename: "esp-talk-d6-br"
+  board: "lolin_s2_mini"
   reboot_timeout: 2min
-  ota_password: !secret talk_d2_ota
-  api_key: !secret talk_d2_key
+  ota_password: !secret talk_d6_ota
+  api_key: !secret talk_d6_key
+  lrclk_pin: "GPIO39"
+  bclk_pin: "GPIO35"
+  dout_pin: "GPIO18"
 
 packages:
   core: !include common/core.yaml
