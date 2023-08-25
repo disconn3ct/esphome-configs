@@ -42,7 +42,7 @@ text_sensor:
     name: "ESPHome Platform"
     lambda: |-
       return {"$framework"};
-    update_interval: never
+    update_interval: 24h
     entity_category: "diagnostic"
 
 button:
