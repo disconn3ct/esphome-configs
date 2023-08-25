@@ -33,13 +33,26 @@ sensor:
   - platform: template
     name: "${petname}-Pawscout-Distance-${devicename}"
     id: pawscout_dist
-    update_interval: 30s
+    update_interval: 15s
     unit_of_measurement: "ft"
     device_class: ""
     state_class: "measurement"
     accuracy_decimals: 1
     #entity_category: "diagnostic"
     icon: "mdi:signal-distance-variant"
+    # Unrolled some logic but NAN is basically "not comparable" to numbers.
     lambda: |-
-      return std::min(getTracker("PawScout-0").get_dist(), getTracker("PawScout-1").get_dist());
+      float dist0 = getTracker("PawScout-0").get_dist();
+      float dist1 = getTracker("PawScout-1").get_dist();
+      if (isnan(dist0)) {
+        ESP_LOGD("ble_dist","Returning PS1: %f", dist1 );
+        return dist1;
+      }
+      if (isnan(dist1)) {
+        ESP_LOGD("ble_dist","Returning PS0: %f", dist0);
+        return dist0;
+      }
+      float dist = std::min(dist0, dist1);
+      ESP_LOGD("ble_dist","Returning MIN: %f", dist);
+      return dist;
 
