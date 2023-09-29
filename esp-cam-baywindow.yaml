@@ -18,6 +18,8 @@ substitutions:
   ae_level: "1"
   brightness: "0"
   saturation: "2"
+  vertical_flip: "false"
+  horizontal_mirror: "false"
 
 packages:
   core: !include common/core.yaml
