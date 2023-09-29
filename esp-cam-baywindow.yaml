@@ -1,0 +1,28 @@
+substitutions:
+  # Hydro-tower
+  devicename: "esp-cam-baywindow"
+
+  # ESP32
+  board: esp32cam
+
+  # Core
+  ota_password: !secret cam_baywindow_ota
+  api_key: !secret cam_baywindow_key
+
+  # Camera
+  fps: "10 fps"
+  resolution: 1280x1024
+  jpeg_quality: "12"
+  agc_gain_ceiling: 128x
+  aec2: "true"
+  ae_level: "1"
+  brightness: "0"
+  saturation: "2"
+
+packages:
+  core: !include common/core.yaml
+  crypto: !include common/crypto.yaml
+  esp32: !include common/esp32.yaml
+  camera: !include common/espcam.yaml
+  wifi: !include common/wifi-iot.yaml
+  portal: !include common/portal.yaml
