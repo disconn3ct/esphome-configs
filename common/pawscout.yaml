@@ -20,10 +20,18 @@ logger:
   logs:
     esp32_ble_tracker: INFO
 
+api:
+  on_client_connected:
+    - esp32_ble_tracker.start_scan:
+        continuous: true
+  on_client_disconnected:
+    - esp32_ble_tracker.stop_scan:
+
 # https://esphome.io/components/esp32_ble_tracker.html
 esp32_ble_tracker:
   scan_parameters:
     active: true
+    continuous: false
   on_ble_advertise:
     then:
       - lambda: |-
