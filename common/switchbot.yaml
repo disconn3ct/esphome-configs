@@ -1,0 +1,102 @@
+substitutions:
+  board: esp32-c3-devkitm-1
+  framework: esp-idf
+  devicename: "Unknown omg who am I even?"
+  restore_mode: RESTORE_DEFAULT_OFF
+
+packages:
+  esp32: !include esp32.yaml
+
+esp32:
+  framework:
+    sdkconfig_options:
+      CONFIG_BT_BLE_50_FEATURES_SUPPORTED: y
+      CONFIG_BT_BLE_42_FEATURES_SUPPORTED: y
+      CONFIG_ESP_TASK_WDT_TIMEOUT_S: "10"
+
+web_server:
+  port: 80
+  auth:
+    username: dis
+    password: "${ota_password}"
+  ota: false # bad default, breaks compilations
+  local: true # IOT shouldn't link to the fucking internet
+
+switch:
+  - platform: gpio
+    name: "${devicename} Relay"
+    id: "relay"
+    device_class: outlet
+    pin: 6
+    restore_mode: ${restore_mode}
+    on_turn_on:
+      then:
+        - light.turn_on: "white_led"
+    on_turn_off:
+      then:
+        - light.turn_off: "white_led"
+
+binary_sensor:
+  - platform: gpio
+    internal: true
+    pin:
+      number: 2
+      mode: INPUT_PULLUP
+      inverted: true
+    name: "${devicename} Button"
+    filters:
+      - delayed_on: 10ms
+    on_press:
+      then:
+        - switch.toggle: relay
+
+light:
+  - platform: binary
+    internal: true
+    name: "${devicename} white led"
+    id: "white_led"
+    output: white_output
+
+output:
+  - id: white_output
+    platform: gpio
+    pin: GPIO7
+    inverted: true
+
+# set blue led as status
+status_led:
+  pin:
+    number: GPIO8
+    inverted: true
+
+sensor:
+  - platform: hlw8012
+    sel_pin:
+      number: 20
+      inverted: true
+    cf_pin: 18
+    cf1_pin: 19
+    model: BL0937
+    voltage_divider: 1467
+    current:
+      name: "${devicename} Current"
+      unit_of_measurement: A
+    voltage:
+      name: "${devicename} Voltage"
+      unit_of_measurement: V
+    power:
+      name: "${devicename} Power"
+      unit_of_measurement: W
+      id: "wattage"
+    energy:
+      name: "${devicename} Energy"
+    change_mode_every: 1 #Skips first reading after each change, so this will double the update interval. Default 8
+    update_interval: 10s #10s setting => 20 second effective update rate for Power, 40 second for Current and Voltage. Default 60s
+
+  # Reports the total Power so-far each day, resets at midnight, see https://esphome.io/components/sensor/total_daily_energy.html
+  - platform: total_daily_energy
+    name: ${devicename} Total Daily Energy
+    power_id: wattage
+    filters:
+      - multiply: 0.001 ## convert Wh to kWh
+    unit_of_measurement: kWh

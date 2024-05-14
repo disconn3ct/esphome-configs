@@ -1,0 +1,147 @@
+substitutions:
+  timezone: "America/New_York"
+  entity_sunrise: "input_nothing.sunrise_missing"
+  entity_sunset: "input_nothing.sunset_missing"
+  entity_enable: "input_boolean.schedule_enable_missing"
+  # Default once per hour
+  schedule_minutes: "0"
+
+globals:
+  - id: sunrise
+    type: int
+    restore_value: yes
+    initial_value: "0"
+  - id: sunset
+    type: int
+    restore_value: yes
+    initial_value: "0"
+  - id: enabled
+    type: bool
+    restore_value: yes
+    initial_value: "false"
+
+time:
+  - platform: sntp
+    servers:
+      - 0.pool.ntp.org
+      - 1.pool.ntp.org
+      - 2.pool.ntp.org
+    id: time_set
+    timezone: ${timezone}
+    on_time_sync:
+      - then:
+          - logger.log: "Synchronized system clock"
+          - script.execute: run_schedule
+    on_time:
+      - seconds: 0
+        minutes: "${schedule_minutes}"
+        then:
+          - script.execute: run_schedule
+
+sensor:
+  - platform: homeassistant
+    id: leds_sunrise
+    name: "LEDs On Time (h)"
+    entity_id: ${entity_sunrise}
+    accuracy_decimals: 0
+    on_value:
+      then:
+        - lambda: |-
+            id(sunrise) = id(leds_sunrise).state;
+        - script.execute: run_schedule
+  - platform: homeassistant
+    id: leds_sunset
+    name: "LEDs Off Time (h)"
+    accuracy_decimals: 0
+    entity_id: ${entity_sunset}
+    on_value:
+      then:
+        - lambda: |-
+            id(sunset) = id(leds_sunset).state;
+        - script.execute: run_schedule
+
+binary_sensor:
+  - platform: homeassistant
+    id: leds_enable
+    name: "LEDs Enabled"
+    entity_id: ${entity_enable}
+    on_state:
+      then:
+        - lambda: |-
+            id(enabled) = id(leds_enable).state;
+        - script.execute: run_schedule
+
+  - platform: template
+    name: "Time Valid"
+    id: timevalid
+    lambda: |-
+      return(id(time_set).now().is_valid());
+    entity_category: "diagnostic"
+
+script:
+  - id: run_schedule
+    then:
+      - logger.log: "Starting run_schedule"
+      - if:
+          condition: # Everything is valid and enabled
+            - lambda: |-
+                return(
+                  (!isnan(id(leds_enable).state) &&
+                  id(leds_enable).state) && // Enabled
+                  
+                  (!isnan(id(sunrise)) &&
+                  id(sunrise) != 0) && // Sunrise valid
+                  
+                  (!isnan(id(leds_sunset).state) &&
+                  id(sunset) != 0) && // Sunset valid
+                  
+                  id(time_set).now().is_valid() // Time valid
+                );
+          then:
+            - if:
+                condition:
+                  # On: Sunrise is less or equal to now, sunset is greater than now
+                  - lambda: |-
+                      return (id(sunrise) <= id(time_set).now().hour &&
+                          id(time_set).now().hour < id(sunset));
+                then: # Relay should be ON
+                  - if:
+                      condition:
+                        - lambda: |-
+                            return (!id(relay).state);
+                      then:
+                        - switch.turn_on: relay
+                        - lambda: |-
+                            ESP_LOGD("schedule",
+                              "Turn On: Light %s, Time %s, RELAY_%s: %i to %i, now %i",
+                                id(leds_enable).state ? "ENABLED" : "DISABLED",
+                                id(time_set).now().is_valid() ? "VALID" :"INVALID",
+                                id(relay).state ? "ON" : "OFF",
+                                id(sunrise),
+                                id(sunset),
+                                id(time_set).now().hour
+                                );
+                else: # Should be OFF
+                  - switch.turn_off: relay
+                  - lambda: |-
+                      ESP_LOGD("schedule",
+                        "Turn Off: Light %s, Time %s, RELAY_%s: %i to %i, now %i",
+                          id(leds_enable).state ? "ENABLED" : "DISABLED",
+                          id(time_set).now().is_valid() ? "VALID" :"INVALID",
+                          id(relay).state ? "ON" : "OFF",
+                          id(sunrise),
+                          id(sunset),
+                          id(time_set).now().hour
+                          );
+          else: # Something is invalid, do nothing.
+            - lambda: |-
+                ESP_LOGD("schedule", "Skip invalid: Light %s, Time %s, RELAY_%s: %i to %i, now %i",
+                  id(leds_enable).state ? "ENABLED" : "DISABLED",
+                  id(time_set).now().is_valid() ? "VALID" :"INVALID",
+                  id(relay).state ? "ON" : "OFF",
+
+                  id(sunrise),
+                  id(sunset),
+                  id(time_set).now().hour
+                  );
+      - logger.log: "Ending run_schedule"

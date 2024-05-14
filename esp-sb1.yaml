@@ -1,0 +1,23 @@
+substitutions:
+  devicename: "esp-sb1"
+
+  # Core
+  ota_password: !secret sb1_ota
+  api_key: !secret sb1_key
+
+  # Scheduler
+  timezone: "America/New_York"
+  schedule_minutes: "/15" # Check every x minutes
+  entity_sunrise: "input_number.plant_sunrise"
+  entity_sunset: "input_number.plant_sunset"
+  entity_enable: "input_boolean.plant_sb1_enabled"
+
+packages:
+  core: !include common/core.yaml
+  switchbot: !include common/switchbot.yaml
+  crypto: !include common/crypto.yaml
+  wifi: !include common/wifi-iot.yaml
+  portal: !include common/portal.yaml
+  bluetooth: !include common/bluetooth.yaml
+  pawscout: !include common/pawscout.yaml
+  schedule: !include common/light_schedule.yaml
