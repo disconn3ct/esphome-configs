@@ -63,4 +63,3 @@ sensor:
       float dist = std::min(dist0, dist1);
       ESP_LOGD("ble_dist","Returning MIN: %f", dist);
       return dist;
-

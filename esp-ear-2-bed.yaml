@@ -8,7 +8,7 @@ substitutions:
 
   # Local
   touch_debug: "false" # setup_mode
-  sense_delay: "15s"
+  sense_delay: "30s"
   touch_icon: "mdi:bed"
 
   # https://community.home-assistant.io/t/esp-touch-threshold-too-close/427136/14

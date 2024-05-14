@@ -56,4 +56,3 @@ button:
 binary_sensor:
   - platform: status
     name: "${devicename} Connection Status"
-
