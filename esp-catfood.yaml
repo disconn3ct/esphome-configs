@@ -10,7 +10,7 @@ substitutions:
   # Camera
   fps: "10 fps"
   resolution: 1024x768
-  jpeg_quality: "16"
+  jpeg_quality: "20"
   agc_gain_ceiling: 128x
   aec2: "true"
   ae_level: "1"
@@ -22,5 +22,7 @@ packages:
   crypto: !include common/crypto.yaml
   esp32: !include common/esp32.yaml
   camera: !include common/espcam.yaml
+  stream: !include common/espcam-web.yaml
   wifi: !include common/wifi-iot.yaml
   portal: !include common/portal.yaml
+

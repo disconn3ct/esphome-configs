@@ -1,0 +1,7 @@
+substitutions:
+  port: "8080"
+  mode: "stream"
+
+esp32_camera_web_server:
+  - port: "${port}"
+    mode: "${mode}"
