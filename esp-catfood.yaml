@@ -8,6 +8,8 @@ substitutions:
   api_key: !secret catfood_key
 
   # Camera
+  vertical_flip: "false"
+  horizontal_mirror: "false"
   fps: "10 fps"
   resolution: 1024x768
   jpeg_quality: "20"
