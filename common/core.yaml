@@ -9,9 +9,11 @@ esphome:
 api:
 
 ota:
+  platform: esphome
   password: "${ota_password}"
 
 logger:
+  # Options: NONE, ERROR, WARN, INFO, *DEBUG, VERBOSE, VERY_VERBOSE
   level: "${log_level}"
 
 sensor:
