@@ -1,0 +1,38 @@
+substitutions:
+  devicename: "esp-prusacam"
+
+  # ESP32
+  board: esp32cam
+
+  # Core
+  ota_password: !secret prusacam_ota
+  api_key: !secret prusacam_key
+
+  # Wifi
+  reboot_timeout: 5min
+
+  # Camera
+  resolution: 640x480 # 800x600
+  fps: "3 fps"
+  # jpeg_quality: "12"
+  agc_gain_ceiling: 2x # 2x # 32x # 64x # 128x
+  aec2: "true"
+  ae_level: "1"
+  # brightness: "1"
+  # saturation: "1"
+  # horizontal_mirror: "false"
+  # vertical_flip: "false"
+
+packages:
+  core: !include common/core.yaml
+  crypto: !include common/crypto.yaml
+  esp32: !include common/esp32.yaml
+  camera: !include common/espcam.yaml
+  wifi: !include common/wifi-iot.yaml
+  portal: !include common/portal.yaml
+
+esp32_camera_web_server:
+  - port: 8080
+    mode: stream
+  - port: 8081
+    mode: snapshot
