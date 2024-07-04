@@ -3,4 +3,5 @@ substitutions:
 
 api:
   encryption:
+    # Format: 32 byte base64-encoded string
     key: "${api_key}"
