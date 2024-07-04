@@ -25,11 +25,12 @@ packages:
   crypto: !include common/crypto.yaml
   esp32: !include common/esp32.yaml
   camera: !include common/espcam.yaml
+  stream: !include common/espcam-web.yaml
+  snap: !include
+    file: common/espcam-web.yaml
+    vars:
+      mode: snapshot
+      port: "8081"
   wifi: !include common/wifi-iot.yaml
   portal: !include common/portal.yaml
 
-esp32_camera_web_server:
-  - port: 8080
-    mode: stream
-  - port: 8081
-    mode: snapshot

@@ -16,7 +16,7 @@ substitutions:
   agc_gain_ceiling: 128x
   aec2: "true"
   ae_level: "1"
-  brightness: "1"
+  brightness: "2"
   saturation: "1"
 
 packages:
@@ -25,6 +25,11 @@ packages:
   esp32: !include common/esp32.yaml
   camera: !include common/espcam.yaml
   stream: !include common/espcam-web.yaml
+  snap: !include
+    file: common/espcam-web.yaml
+    vars:
+      mode: snapshot
+      port: "8081"
   wifi: !include common/wifi-iot.yaml
   portal: !include common/portal.yaml
 
