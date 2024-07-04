@@ -4,6 +4,8 @@ substitutions:
   pawscout_uuid_1: !secret pawscout_uuid_1
 
   petname: !secret petname
+  # Must be less than global
+  log_level: INFO
 
 esphome:
   includes:
@@ -18,7 +20,7 @@ esphome:
 
 logger:
   logs:
-    esp32_ble_tracker: INFO
+    esp32_ble_tracker: "$log_level"
 
 api:
   on_client_connected:
