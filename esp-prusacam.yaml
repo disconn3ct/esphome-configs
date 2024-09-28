@@ -13,15 +13,15 @@ substitutions:
 
   # Camera
   resolution: 640x480 # 800x600
-  fps: "3 fps"
+  fps: "5 fps"
   # jpeg_quality: "12"
   agc_gain_ceiling: 2x # 2x # 32x # 64x # 128x
   aec2: "true"
   ae_level: "1"
   # brightness: "1"
   # saturation: "1"
-  # horizontal_mirror: "false"
-  # vertical_flip: "false"
+  horizontal_mirror: "false"
+  vertical_flip: "false"
 
 packages:
   core: !include common/core.yaml
@@ -34,5 +34,5 @@ packages:
     vars:
       mode: snapshot
       port: "8081"
-  wifi: !include common/wifi-iot.yaml
+  wifi: !include common/wifi-unified-iot.yaml
   portal: !include common/portal.yaml

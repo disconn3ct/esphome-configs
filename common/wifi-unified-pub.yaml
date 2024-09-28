@@ -1,0 +1,11 @@
+# Parameters:
+substitutions:
+  reboot_timeout: 1min
+  fast_connect: "false"
+
+wifi:
+  ssid: !secret wifi_unified_ssid
+  password: !secret wifi_unified_pub_password
+
+  reboot_timeout: "${reboot_timeout}"
+  fast_connect: "${fast_connect}"

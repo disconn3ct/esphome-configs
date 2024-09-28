@@ -16,7 +16,7 @@ packages:
   core: !include common/core.yaml
   switchbot: !include common/switchbot.yaml
   crypto: !include common/crypto.yaml
-  wifi: !include common/wifi-iot.yaml
+  wifi: !include common/wifi-unified-iot.yaml
   portal: !include common/portal.yaml
   bluetooth: !include common/bluetooth.yaml
   pawscout: !include common/pawscout.yaml

@@ -30,6 +30,6 @@ packages:
     vars:
       mode: snapshot
       port: "8081"
-  wifi: !include common/wifi-iot.yaml
+  wifi: !include common/wifi-unified-iot.yaml
   portal: !include common/portal.yaml
 
