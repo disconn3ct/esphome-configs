@@ -1,5 +1,7 @@
 substitutions:
   devicename: "esp-sb1"
+  reboot_timeout: 5min
+  fast_connect: "true"
 
   # Core
   ota_password: !secret sb1_ota

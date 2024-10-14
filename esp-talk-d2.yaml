@@ -1,9 +1,11 @@
+# Office
 substitutions:
   devicename: "esp-talk-d2"
   board: wemos_d1_mini32
   reboot_timeout: 2min
   ota_password: !secret talk_d2_ota
   api_key: !secret talk_d2_key
+  fast_connect: "true"
 
 packages:
   core: !include common/core.yaml

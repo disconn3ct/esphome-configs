@@ -9,11 +9,13 @@ substitutions:
   api_key: !secret plantcam_key
 
   # Wifi
-  reboot_timeout: 5min
+  reboot_timeout: 10min
+  fast_connect: "true"
 
   # Camera
   resolution: 1280x1024
-  jpeg_quality: "12"
+  fps: "0.333 fps"
+  jpeg_quality: "10"
   agc_gain_ceiling: 64x # 2x # 32x # 64x # 128x
   aec2: "true"
   ae_level: "1"

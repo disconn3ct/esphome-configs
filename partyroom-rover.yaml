@@ -1,7 +1,6 @@
 # Wrover
 substitutions:
   devicename: "partyroom-rover"
-  # ESP32
   board: esp-wrover-kit
   #framework: arduino
   framework: esp-idf
@@ -17,3 +16,4 @@ packages:
   bluetooth: !include common/bluetooth.yaml
   pawscout: !include common/pawscout.yaml
   portal: !include common/portal.yaml
+
