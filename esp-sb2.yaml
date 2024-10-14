@@ -1,20 +1,20 @@
 substitutions:
-  devicename: "esp-sb1"
+  devicename: "esp-sb2"
   reboot_timeout: 5min
   fast_connect: "true"
 
   # Core
-  ota_password: !secret sb1_ota
-  api_key: !secret sb1_key
+  ota_password: !secret sb2_ota
+  api_key: !secret sb2_key
 
-  # voltage_divider:
+  voltage_divider: "1375"
 
   # Scheduler
   timezone: "America/New_York"
   schedule_minutes: "/5" # Check every x minutes
-  entity_sunrise: "input_number.plant_sunrise"
-  entity_sunset: "input_number.plant_sunset"
-  entity_enable: "input_boolean.plant_sb1_enabled"
+  entity_sunrise: "input_number.nursery_sunrise"
+  entity_sunset: "input_number.nursery_sunset"
+  entity_enable: "input_boolean.nursery_enabled"
 
 packages:
   core: !include common/core.yaml
@@ -23,6 +23,6 @@ packages:
   wifi: !include common/wifi-public.yaml
   portal: !include common/portal.yaml
   bluetooth: !include common/bluetooth.yaml
-  pawscout: !include common/pawscout.yaml
+  #pawscout: !include common/pawscout.yaml # too close to SB1
   schedule: !include common/light_schedule.yaml
 
