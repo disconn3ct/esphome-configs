@@ -3,6 +3,7 @@ substitutions:
   framework: esp-idf
   devicename: "Unknown omg who am I even?"
   restore_mode: RESTORE_DEFAULT_OFF
+  voltage_divider: "1467"
 
 packages:
   esp32: !include esp32.yaml
@@ -77,7 +78,7 @@ sensor:
     cf_pin: 18
     cf1_pin: 19
     model: BL0937
-    voltage_divider: 1467
+    voltage_divider: "${voltage_divider}"
     current:
       name: "${devicename} Current"
       unit_of_measurement: A
