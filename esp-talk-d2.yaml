@@ -8,6 +8,7 @@ substitutions:
   fast_connect: "true"
 
 packages:
+  #core: !include common/oldcore.yaml
   core: !include common/core.yaml
   crypto: !include common/crypto.yaml
   esp32: !include common/esp32.yaml
