@@ -1,0 +1,830 @@
+# https://gist.github.com/matze19999/9118f667510291e1e0ea28e74ec03245
+# via https://community.home-assistant.io/t/waveshare-esp32-s3-lcd-1-85/833702/24
+
+substitutions:
+  devicename: "talkie-1"
+  framework: "esp-idf" # not used here
+  friendly_devicename: "Walkie Talkie 1"
+  fast_connect: "false"
+  reboot_timeout: 2min
+
+  ota_password: !secret talkie_1_ota
+  api_key: !secret talkie_1_key
+
+packages:
+  core: !include common/core.yaml
+  crypto: !include common/crypto.yaml
+  wifi: !include common/wifi-unified-iot.yaml
+
+esphome:
+  name: "${devicename}"
+  friendly_name: "${friendly_devicename}"
+  on_boot:
+    priority: 600
+    then:
+      - lambda: |-
+          uint8_t config[2];
+
+          // 🔹 Gyro + Accel aus Standby holen
+          config[0] = 0x08;
+          config[1] = 0x07;  // Sensor vollständig aktivieren
+          id(i2c_main).write(0x6B, config, 2);
+          delay(10);
+
+          // 🔹 Höhere Abtastrate setzen
+          config[0] = 0x02;
+          config[1] = 0x1F;  // 1600 Hz ODR für maximale Datenrate
+          id(i2c_main).write(0x6B, config, 2);
+          delay(10);
+
+          // 🔹 Gyro explizit aktivieren
+          config[0] = 0x07;
+          config[1] = 0x01;
+          id(i2c_main).write(0x6B, config, 2);
+          delay(10);
+
+          // 🔹 Data-Ready aktivieren
+          config[0] = 0x05;
+          config[1] = 0x01;
+          id(i2c_main).write(0x6B, config, 2);
+          delay(10);
+
+          ESP_LOGI("QMI8658", "ODR auf 1600 Hz erhöht, Data Ready aktiviert!");
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  on_client_connected:
+    then:
+      - delay: 1s
+      - voice_assistant.start_continuous:
+      - delay: 1s
+      - voice_assistant.stop:
+      - delay: 2s
+      - voice_assistant.start_continuous:
+  encryption:
+    key: !secret talkie_1_key
+  services:
+    - service: set_display_text
+      variables:
+        new_text: string
+      then:
+        - text_sensor.template.publish:
+            id: display_text
+            state: !lambda 'return new_text;'
+
+external_components:
+  - source: github://pr#5230
+    components: esp_adf
+    refresh: 0s
+  - source:
+      type: git
+      url: https://github.com/esphome/home-assistant-voice-pe
+      ref: dev
+    components:
+      - micro_wake_word
+      - microphone
+      - voice_assistant
+    refresh: 1s
+media_player:
+  - platform: speaker
+    name: Media Speaker
+    id: speaker_media_player
+    volume_increment: 0.05
+    volume_min: 0.1
+    volume_max: 1
+    announcement_pipeline:
+      speaker: i2s_speaker
+      format: FLAC
+      sample_rate: 48000
+      num_channels: 2
+
+ota:
+  platform: esphome
+  password: "${ota_password}"
+
+esp32:
+  board: esp32-s3-devkitc-1
+  framework:
+    type: esp-idf
+    sdkconfig_options:
+      CONFIG_ESP32S3_DEFAULT_CPU_FREQ_240: "y"
+      CONFIG_ESP32S3_DATA_CACHE_64KB: "y"
+      CONFIG_ESP32S3_DATA_CACHE_LINE_64B: "y"
+      CONFIG_SPIRAM_FETCH_INSTRUCTIONS: y
+      CONFIG_SPIRAM_RODATA: y
+
+psram:
+  mode: octal
+  speed: 120MHz
+
+web_server:
+  port: 80
+  version: 2
+  include_internal: true
+
+i2s_audio:
+  - id: i2s_in
+    i2s_lrclk_pin: GPIO2
+    i2s_bclk_pin: GPIO15
+  - id: i2s_out
+    i2s_lrclk_pin: GPIO38
+    i2s_bclk_pin: GPIO48
+
+speaker:
+  - platform: i2s_audio
+    id: i2s_speaker
+    i2s_audio_id: i2s_out
+    i2s_dout_pin: GPIO47
+    dac_type: external
+    channel: stereo
+
+microphone:
+  - platform: i2s_audio
+    id: i2s_microphone
+    i2s_audio_id: i2s_in
+    i2s_din_pin: GPIO39
+    adc_type: external
+    pdm: false
+    channel: right
+    sample_rate: 16000
+    bits_per_sample: 16bit
+
+voice_assistant:
+  id: va
+  microphone: i2s_microphone
+  speaker: i2s_speaker
+  use_wake_word: true
+  on_wake_word_detected:
+    then:
+      - light.turn_on:
+          id: display_backlight
+          brightness: 100%
+      - lvgl.resume:
+      - text_sensor.template.publish:
+          id: display_text
+          state: "I'm listening"
+      - lvgl.widget.redraw:
+  on_tts_end:
+    then:
+      - light.turn_on:
+          id: display_backlight
+          brightness: 30%
+      - text_sensor.template.publish:
+          id: display_text
+          state: "Say OK Nabu..."
+  on_client_connected:
+      - text_sensor.template.publish:
+          id: display_text
+          state: "Say OK Nabu..."
+  on_idle:
+      - text_sensor.template.publish:
+          id: display_text
+          state: "Say OK Nabu..."
+
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: GPIO6
+      inverted: true
+    name: "Power Button"
+    on_press:
+      - voice_assistant.start:
+          silence_detection: false
+  - platform: gpio
+    pin:
+      number: GPIO0
+      inverted: true
+    name: "Boot Button"
+  - platform: touchscreen
+    name: Left Touch Button
+    x_min: 0
+    x_max: 180
+    y_min: 0
+    y_max: 360
+    on_press:
+      then:
+        lvgl.page.previous:
+  - platform: touchscreen
+    name: Right Touch Button
+    x_min: 180
+    x_max: 360
+    y_min: 0
+    y_max: 360
+    on_press:
+      then:
+        lvgl.page.next:
+
+
+i2c:
+  - id: i2c_main
+    sda: GPIO11
+    scl: GPIO10
+    scan: true
+
+  - id: i2c_touch
+    sda: GPIO1
+    scl: GPIO3
+    frequency: 400kHz
+    scan: false
+
+
+pca9554:
+  - id: 'pca9554a_device'
+    i2c_id: i2c_main
+
+output:
+  - platform: ledc
+    pin: GPIO5
+    id: backlight
+
+light:
+  - platform: monochromatic
+    output: backlight
+    id: display_backlight
+    name: "backlight Light"
+    restore_mode: ALWAYS_ON
+
+spi:
+  id: display_qspi
+  type: quad
+  clk_pin: GPIO40
+  data_pins: [GPIO46, GPIO45, GPIO42, GPIO41]
+
+
+display:
+  - platform: qspi_dbi
+    model: CUSTOM
+    #lambda: |-
+    #  auto touch = id(my_touchscreen)->get_touch();
+    #  if (touch) // or touch.has_value()
+    #    it.filled_circle(touch.value().x, touch.value().y, 10, RED);
+    # data_rate: 40MHz
+    id: main_display
+    spi_id: display_qspi
+    color_order: rgb
+    dimensions:
+      height: 360
+      width: 360
+    cs_pin: GPIO21
+    reset_pin:
+      pca9554: pca9554a_device
+      number: 1
+    auto_clear_enabled: false #set to false for LVGL
+    init_sequence:
+      - [ 0xF0, 0x08 ]
+      - [ 0xF2, 0x08 ]
+      - [ 0x9B, 0x51 ]
+      - [ 0x86, 0x53 ]
+      - [ 0xF2, 0x80 ]
+      - [ 0xF0, 0x00 ]
+      - [ 0xF0, 0x01 ]
+      - [ 0xF1, 0x01 ]
+      - [ 0xB0, 0x54 ]
+      - [ 0xB1, 0x3F ]
+      - [ 0xB2, 0x2A ]
+      - [ 0xB4, 0x46 ]
+      - [ 0xB5, 0x34 ]
+      - [ 0xB6, 0xD5 ]
+      - [ 0xB7, 0x30 ]
+      - [ 0xBA, 0x00 ]
+      - [ 0xBB, 0x08 ]
+      - [ 0xBC, 0x08 ]
+      - [ 0xBD, 0x00 ]
+      - [ 0xC0, 0x80 ]
+      - [ 0xC1, 0x10 ]
+      - [ 0xC2, 0x37 ]
+      - [ 0xC3, 0x80 ]
+      - [ 0xC4, 0x10 ]
+      - [ 0xC5, 0x37 ]
+      - [ 0xC6, 0xA9 ]
+      - [ 0xC7, 0x41 ]
+      - [ 0xC8, 0x51 ]
+      - [ 0xC9, 0xA9 ]
+      - [ 0xCA, 0x41 ]
+      - [ 0xCB, 0x51 ]
+      - [ 0xD0, 0x91 ]
+      - [ 0xD1, 0x68 ]
+      - [ 0xD2, 0x69 ]
+      - [ 0xF5, 0x00, 0xA5 ]
+      - [ 0xDD, 0x3F ]
+      - [ 0xDE, 0x3F ]
+      - [ 0xF1, 0x10 ]
+      - [ 0xF0, 0x00 ]
+      - [ 0xF0, 0x02 ]
+      - [ 0xE0, 0xF0, 0x06, 0x0B, 0x09, 0x09, 0x16, 0x32, 0x44, 0x4A, 0x37, 0x13, 0x13, 0x2E, 0x34 ]
+      - [ 0xE1, 0xF0, 0x06, 0x0B, 0x09, 0x08, 0x05, 0x32, 0x33, 0x49, 0x17, 0x13, 0x13, 0x2E, 0x34 ]
+      - [ 0xF0, 0x10 ]
+      - [ 0xF3, 0x10 ]
+      - [ 0xE0, 0x0A ]
+      - [ 0xE1, 0x00 ]
+      - [ 0xE2, 0x00 ]
+      - [ 0xE3, 0x00 ]
+      - [ 0xE4, 0xE0 ]
+      - [ 0xE5, 0x06 ]
+      - [ 0xE6, 0x21 ]
+      - [ 0xE7, 0x00 ]
+      - [ 0xE8, 0x05 ]
+      - [ 0xE9, 0x82 ]
+      - [ 0xEA, 0xDF ]
+      - [ 0xEB, 0x89 ]
+      - [ 0xEC, 0x20 ]
+      - [ 0xED, 0x14 ]
+      - [ 0xEE, 0xFF ]
+      - [ 0xEF, 0x00 ]
+      - [ 0xF8, 0xFF ]
+      - [ 0xF9, 0x00 ]
+      - [ 0xFA, 0x00 ]
+      - [ 0xFB, 0x30 ]
+      - [ 0xFC, 0x00 ]
+      - [ 0xFD, 0x00 ]
+      - [ 0xFE, 0x00 ]
+      - [ 0xFF, 0x00 ]
+      - [ 0x60, 0x42 ]
+      - [ 0x61, 0xE0 ]
+      - [ 0x62, 0x40 ]
+      - [ 0x63, 0x40 ]
+      - [ 0x64, 0x02 ]
+      - [ 0x65, 0x00 ]
+      - [ 0x66, 0x40 ]
+      - [ 0x67, 0x03 ]
+      - [ 0x68, 0x00 ]
+      - [ 0x69, 0x00 ]
+      - [ 0x6A, 0x00 ]
+      - [ 0x6B, 0x00 ]
+      - [ 0x70, 0x42 ]
+      - [ 0x71, 0xE0 ]
+      - [ 0x72, 0x40 ]
+      - [ 0x73, 0x40 ]
+      - [ 0x74, 0x02 ]
+      - [ 0x75, 0x00 ]
+      - [ 0x76, 0x40 ]
+      - [ 0x77, 0x03 ]
+      - [ 0x78, 0x00 ]
+      - [ 0x79, 0x00 ]
+      - [ 0x7A, 0x00 ]
+      - [ 0x7B, 0x00 ]
+      - [ 0x80, 0x48 ]
+      - [ 0x81, 0x00 ]
+      - [ 0x82, 0x05 ]
+      - [ 0x83, 0x02 ]
+      - [ 0x84, 0xDD ]
+      - [ 0x85, 0x00 ]
+      - [ 0x86, 0x00 ]
+      - [ 0x87, 0x00 ]
+      - [ 0x88, 0x48 ]
+      - [ 0x89, 0x00 ]
+      - [ 0x8A, 0x07 ]
+      - [ 0x8B, 0x02 ]
+      - [ 0x8C, 0xDF ]
+      - [ 0x8D, 0x00 ]
+      - [ 0x8E, 0x00 ]
+      - [ 0x8F, 0x00 ]
+      - [ 0x90, 0x48 ]
+      - [ 0x91, 0x00 ]
+      - [ 0x92, 0x09 ]
+      - [ 0x93, 0x02 ]
+      - [ 0x94, 0xE1 ]
+      - [ 0x95, 0x00 ]
+      - [ 0x96, 0x00 ]
+      - [ 0x97, 0x00 ]
+      - [ 0x98, 0x48 ]
+      - [ 0x99, 0x00 ]
+      - [ 0x9A, 0x0B ]
+      - [ 0x9B, 0x02 ]
+      - [ 0x9C, 0xE3 ]
+      - [ 0x9D, 0x00 ]
+      - [ 0x9E, 0x00 ]
+      - [ 0x9F, 0x00 ]
+      - [ 0xA0, 0x48 ]
+      - [ 0xA1, 0x00 ]
+      - [ 0xA2, 0x04 ]
+      - [ 0xA3, 0x02 ]
+      - [ 0xA4, 0xDC ]
+      - [ 0xA5, 0x00 ]
+      - [ 0xA6, 0x00 ]
+      - [ 0xA7, 0x00 ]
+      - [ 0xA8, 0x48 ]
+      - [ 0xA9, 0x00 ]
+      - [ 0xAA, 0x06 ]
+      - [ 0xAB, 0x02 ]
+      - [ 0xAC, 0xDE ]
+      - [ 0xAD, 0x00 ]
+      - [ 0xAE, 0x00 ]
+      - [ 0xAF, 0x00 ]
+      - [ 0xB0, 0x48 ]
+      - [ 0xB1, 0x00 ]
+      - [ 0xB2, 0x08 ]
+      - [ 0xB3, 0x02 ]
+      - [ 0xB4, 0xE0 ]
+      - [ 0xB5, 0x00 ]
+      - [ 0xB6, 0x00 ]
+      - [ 0xB7, 0x00 ]
+      - [ 0xB8, 0x48 ]
+      - [ 0xB9, 0x00 ]
+      - [ 0xBA, 0x0A ]
+      - [ 0xBB, 0x02 ]
+      - [ 0xBC, 0xE2 ]
+      - [ 0xBD, 0x00 ]
+      - [ 0xBE, 0x00 ]
+      - [ 0xBF, 0x00 ]
+      - [ 0xC0, 0x12 ]
+      - [ 0xC1, 0xAA ]
+      - [ 0xC2, 0x65 ]
+      - [ 0xC3, 0x74 ]
+      - [ 0xC4, 0x47 ]
+      - [ 0xC5, 0x56 ]
+      - [ 0xC6, 0x00 ]
+      - [ 0xC7, 0x88 ]
+      - [ 0xC8, 0x99 ]
+      - [ 0xC9, 0x33 ]
+      - [ 0xD0, 0x21 ]
+      - [ 0xD1, 0xAA ]
+      - [ 0xD2, 0x65 ]
+      - [ 0xD3, 0x74 ]
+      - [ 0xD4, 0x47 ]
+      - [ 0xD5, 0x56 ]
+      - [ 0xD6, 0x00 ]
+      - [ 0xD7, 0x88 ]
+      - [ 0xD8, 0x99 ]
+      - [ 0xD9, 0x33 ]
+      - [ 0xF3, 0x01 ]
+      - [ 0xF0, 0x00 ]
+      - [ 0xF0, 0x01 ]
+      - [ 0xF1, 0x01 ]
+      - [ 0xA0, 0x0B ]
+      - [ 0xA3, 0x2A ]
+      - [ 0xA5, 0xC3 ]
+      - delay 1ms
+      - [ 0xA3, 0x2B ]
+      - [ 0xA5, 0xC3 ]
+      - delay 1ms
+      - [ 0xA3, 0x2C ]
+      - [ 0xA5, 0xC3 ]
+      - delay 1ms
+      - [ 0xA3, 0x2D ]
+      - [ 0xA5, 0xC3 ]
+      - delay 1ms
+      - [ 0xA3, 0x2E ]
+      - [ 0xA5, 0xC3 ]
+      - delay 1ms
+      - [ 0xA3, 0x2F ]
+      - [ 0xA5, 0xC3 ]
+      - delay 1ms
+      - [ 0xA3, 0x30 ]
+      - [ 0xA5, 0xC3 ]
+      - delay 1ms
+      - [ 0xA3, 0x31 ]
+      - [ 0xA5, 0xC3 ]
+      - delay 1ms
+      - [ 0xA3, 0x32 ]
+      - [ 0xA5, 0xC3 ]
+      - delay 1ms
+      - [ 0xA3, 0x33 ]
+      - [ 0xA5, 0xC3 ]
+      - delay 1ms
+      - [ 0xA0, 0x09 ]
+      - [ 0xF1, 0x10 ]
+      - [ 0xF0, 0x00 ]
+      - [ 0x2A, 0x00, 0x00, 0x01, 0x67 ]
+      - [ 0x2B, 0x01, 0x68, 0x01, 0x68 ]
+      - [ 0x4D, 0x00 ]
+      - [ 0x4E, 0x00 ]
+      - [ 0x4F, 0x00 ]
+      - [ 0x4C, 0x01 ]
+      - delay 10ms
+      - [ 0x4C, 0x00 ]
+      - [ 0x2A, 0x00, 0x00, 0x01, 0x67 ]
+      - [ 0x2B, 0x00, 0x00, 0x01, 0x67 ]
+      - [ 0x3A, 0x55 ]
+      - [ 0x21, 0x00 ]
+      - [ 0x11, 0x00 ]
+      - delay 120ms
+      - [ 0x29, 0x00 ]
+
+font:
+  - file: "fonts/Montserrat-Medium.ttf"
+    id: montserrat_48
+    size: 48
+
+touchscreen:
+  platform: cst816
+  update_interval: 50ms
+  skip_probe: true
+  id: my_touchscreen
+  i2c_id: i2c_touch
+  address: 0x15  # Fixe I2C-Adresse aus dem Beispielcode
+  interrupt_pin: GPIO4
+  calibration:
+    x_min: 7
+    x_max: 360
+    y_min: 9
+    y_max: 350
+  on_touch:
+    then:
+      - light.turn_on: display_backlight
+      - lvgl.resume:
+      - lvgl.widget.redraw:
+
+lvgl:
+  displays:
+    - main_display
+  touchscreens:
+    - touchscreen_id: my_touchscreen
+  on_idle:
+    timeout: 20s
+    then:
+      - logger.log: "LVGL is idle"
+      - lvgl.pause:
+      - light.turn_off:
+          id: display_backlight
+          transition_length: 5s
+  pages:
+    - id: main_page
+      widgets:
+        - label:
+            id: display_label
+            align: CENTER
+            text: "Screen 1"
+            text_font: montserrat_48
+            long_mode: WRAP
+            width: 300
+            height: 300
+    - id: second_page
+      widgets:
+        - label:
+            id: display_label2
+            align: CENTER
+            text: "Screen 2"
+            text_font: montserrat_48
+            long_mode: WRAP
+            width: 300
+            height: 300
+    - id: third_page
+      widgets:
+        - meter:
+            id: gyro_meter
+            height: 100%
+            width: 100%
+            border_width: 0
+            bg_opa: TRANSP
+            align: CENTER
+            scales:
+              - range_from: 1000
+                range_to: -1000
+                angle_range: 180 # sets the total angle to 180 = starts mid left and ends mid right
+                ticks:
+                  count: 0
+                indicators:
+                  - line:
+                      id: val_needle
+                      width: 8
+                      r_mod: 12 # sets line length by this much difference from the scale default radius
+                      value: -2
+                  - arc:
+                      color: 0xFF3000  # Rot für -1000 bis -900
+                      r_mod: 10
+                      width: 15
+                      start_value: -1000
+                      end_value: -900
+                  - arc:
+                      color: 0xFF3000  # Rot für -900 bis -800
+                      r_mod: 10
+                      width: 15
+                      start_value: -900
+                      end_value: -800
+                  - arc:
+                      color: 0xFF3000  # Rot für -800 bis -700
+                      r_mod: 10
+                      width: 15
+                      start_value: -800
+                      end_value: -700
+                  - arc:
+                      color: 0xFF3000  # Rot für -700 bis -600
+                      r_mod: 10
+                      width: 15
+                      start_value: -700
+                      end_value: -600
+                  - arc:
+                      color: 0xFF3000  # Rot für -600 bis -500
+                      r_mod: 10
+                      width: 15
+                      start_value: -600
+                      end_value: -500
+                  - arc:
+                      color: 0xFF3000  # Rot für -500 bis -400
+                      r_mod: 10
+                      width: 15
+                      start_value: -500
+                      end_value: -400
+                  - arc:
+                      color: 0xFF3000  # Rot für -400 bis -300
+                      r_mod: 10
+                      width: 15
+                      start_value: -400
+                      end_value: -300
+                  - arc:
+                      color: 0xFF3000  # Rot für -300 bis -200
+                      r_mod: 10
+                      width: 15
+                      start_value: -300
+                      end_value: -200
+                  - arc:
+                      color: 0xFF3000  # Rot für -200 bis -100
+                      r_mod: 10
+                      width: 15
+                      start_value: -200
+                      end_value: -100
+                  - arc:
+                      color: 0xFF3000  # Rot für -100 bis 0
+                      r_mod: 10
+                      width: 15
+                      start_value: -100
+                      end_value: 0
+                  - arc:
+                      color: 0x00FF00  # Grün für 0 bis 100
+                      r_mod: 10
+                      width: 15
+                      start_value: 0
+                      end_value: 100
+                  - arc:
+                      color: 0x00FF00  # Grün für 100 bis 200
+                      r_mod: 10
+                      width: 15
+                      start_value: 100
+                      end_value: 200
+                  - arc:
+                      color: 0x00FF00  # Grün für 200 bis 300
+                      r_mod: 10
+                      width: 15
+                      start_value: 200
+                      end_value: 300
+                  - arc:
+                      color: 0x00FF00  # Grün für 300 bis 400
+                      r_mod: 10
+                      width: 15
+                      start_value: 300
+                      end_value: 400
+                  - arc:
+                      color: 0x00FF00  # Grün für 400 bis 500
+                      r_mod: 10
+                      width: 15
+                      start_value: 400
+                      end_value: 500
+                  - arc:
+                      color: 0x00FF00  # Grün für 500 bis 600
+                      r_mod: 10
+                      width: 15
+                      start_value: 500
+                      end_value: 600
+                  - arc:
+                      color: 0x00FF00  # Grün für 600 bis 700
+                      r_mod: 10
+                      width: 15
+                      start_value: 600
+                      end_value: 700
+                  - arc:
+                      color: 0x00FF00  # Grün für 700 bis 800
+                      r_mod: 10
+                      width: 15
+                      start_value: 700
+                      end_value: 800
+                  - arc:
+                      color: 0x00FF00  # Grün für 800 bis 900
+                      r_mod: 10
+                      width: 15
+                      start_value: 800
+                      end_value: 900
+                  - arc:
+                      color: 0x00FF00  # Grün für 900 bis 1000
+                      r_mod: 10
+                      width: 15
+                      start_value: 900
+                      end_value: 1000
+
+        - obj: # to cover the middle part of meter indicator line
+            height: 146
+            width: 146
+            radius: 73
+            align: CENTER
+            border_width: 0
+            bg_color: 0xFFFFFF
+            pad_all: 0
+        - label: # gauge numeric indicator
+            id: val_text
+            text_font: montserrat_48
+            align: CENTER
+            y: -5
+            text: "0"               
+    - id: fourth_page
+      widgets:    
+        - spinner:
+            align: CENTER
+            x: 0
+            y: 0
+            spin_time: 3s
+            arc_length: 20deg
+            arc_color: 0x00ff00
+            id: spinner_id
+            indicator:
+              arc_color: 0xff0000
+
+#text_sensor:
+#  - platform: template
+#    name: "Display Text"
+#    id: display_text
+#    update_interval: never
+#    on_value:
+#      then:
+#        - lambda: |-
+#            if (id(display_label)) {
+#              lv_label_set_text(id(display_label), x.c_str());
+#              lv_refr_now(NULL);
+#            }
+
+text_sensor:
+  - platform: template
+    name: "Display Text"
+    id: display_text
+    update_interval: never
+    on_value:
+      then:
+        - lambda: |-
+            if (id(display_label)) {
+              lv_label_set_text(id(display_label), id(display_text).state.c_str());
+              lv_refr_now(NULL);  // Erzwingt ein sofortiges Redraw
+            }
+
+sensor:
+  - platform: template
+    name: "Accel X"
+    lambda: |-
+      uint8_t reg = 0x30;
+      uint8_t buffer[6] = {0};
+
+      id(i2c_main).write(0x6B, &reg, 1);
+      id(i2c_main).read(0x6B, buffer, 6);
+
+      int16_t raw_x = (buffer[0] << 8) | buffer[1];
+      int16_t raw_y = (buffer[2] << 8) | buffer[3];
+      int16_t raw_z = (buffer[4] << 8) | buffer[5];
+
+      //ESP_LOGI("QMI8658", "Final Accel X: %d, Y: %d, Z: %d", raw_x, raw_y, raw_z);
+      return (float)raw_x / 16384.0;  // Standard-Skalierung für ±2G
+    update_interval: 500ms
+
+  - platform: template
+    name: "Gyroscope X"
+    id: gyro_x
+    lambda: |-
+      uint8_t reg = 0x36;  // Gyro X-Register
+      uint8_t buffer[2] = {0};
+
+      id(i2c_main).write(0x6B, &reg, 1);
+      id(i2c_main).read(0x6B, buffer, 2);
+
+      int16_t raw_gyro_x = (buffer[0] << 8) | buffer[1];
+      float gyro_x_value = (float)raw_gyro_x / 16.4;  // ±2000 dps Skalierung
+
+      return gyro_x_value;
+    update_interval: 500ms
+
+  - platform: template
+    name: "Gyroscope Y"
+    id: gyro_y
+    lambda: |-
+      uint8_t reg = 0x38;  // Gyro Y-Register
+      uint8_t buffer[2] = {0};
+
+      id(i2c_main).write(0x6B, &reg, 1);
+      id(i2c_main).read(0x6B, buffer, 2);
+
+      int16_t raw_gyro_y = (buffer[0] << 8) | buffer[1];
+      float gyro_y_value = (float)raw_gyro_y / 16.4;  // ±2000 dps Skalierung
+
+      lv_meter_set_indicator_value(id(gyro_meter), id(val_needle), gyro_y_value);
+      lv_label_set_text(id(val_text), std::to_string(gyro_y_value).c_str());
+      lv_refr_now(NULL);
+
+
+      return gyro_y_value;
+    update_interval: 500ms
+
+  - platform: template
+    name: "Gyroscope Z"
+    id: gyro_z
+    lambda: |-
+      uint8_t reg = 0x3A; // Gyro Z-Register
+      uint8_t buffer[2] = {0};
+
+      id(i2c_main).write(0x6B, &reg, 1);
+      id(i2c_main).read(0x6B, buffer, 2);
+
+      int16_t raw_gyro_z = (buffer[0] << 8) | buffer[1];
+      float gyro_z_value = (float)raw_gyro_z / 16.4; // ±2000 dps Skalierung
+
+      return gyro_z_value;
+    update_interval: 500ms
+
