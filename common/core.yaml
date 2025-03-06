@@ -15,6 +15,8 @@ ota:
 logger:
   # Options: NONE, ERROR, WARN, INFO, *DEBUG, VERBOSE, VERY_VERBOSE
   level: "${log_level}"
+  logs:
+    sensor: WARN  # avoids logging debug sensor updates
 
 sensor:
   # Reports the WiFi signal strength/RSSI in dB
