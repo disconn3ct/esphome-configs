@@ -10,8 +10,8 @@ substitutions:
 esphome:
   includes:
     # https://github.com/rpatel3001/BleDistance/
-    - custom_components/lib/OneEuro.h
-    - custom_components/ble_dist.h
+    - BleDistance/lib/OneEuro.h
+    - BleDistance/ble_dist.h
   on_boot:
     then:
       lambda: |-

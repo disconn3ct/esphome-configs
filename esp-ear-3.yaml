@@ -11,6 +11,8 @@ packages:
   core: !include common/core.yaml
   crypto: !include common/crypto.yaml
   esp32: !include common/esp32.yaml
+  wifi: !include common/wifi-unified-iot.yaml
   bluetooth: !include common/bluetooth.yaml
   pawscout: !include common/pawscout.yaml
-  wifi: !include common/wifi-unified-iot.yaml
+  portal: !include common/portal.yaml
+
