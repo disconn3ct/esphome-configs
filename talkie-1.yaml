@@ -15,6 +15,7 @@ packages:
   core: !include common/core.yaml
   crypto: !include common/crypto.yaml
   wifi: !include common/wifi-unified-iot.yaml
+  portal: !include common/portal.yaml
 
 esphome:
   name: "${devicename}"
