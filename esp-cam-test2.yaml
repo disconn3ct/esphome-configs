@@ -26,7 +26,7 @@ packages:
   crypto: !include common/crypto.yaml
   esp32: !include common/esp32.yaml
   camera: !include common/espcam.yaml
-  wifi: !include common/wifi-iot.yaml
+  wifi: !include common/wifi-unified-iot.yaml
   bluetooth: !include common/bluetooth.yaml
   pawscout: !include common/bluetooth.yaml
   portal: !include common/portal.yaml

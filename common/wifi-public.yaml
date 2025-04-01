@@ -2,10 +2,14 @@
 substitutions:
   reboot_timeout: 1min
   fast_connect: "false"
+  # None, light, high
+  power_save_mode: "light"
 
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
 
-  reboot_timeout: ${reboot_timeout}
-  fast_connect: ${fast_connect}
+  reboot_timeout: "${reboot_timeout}"
+  fast_connect: "${fast_connect}"
+  power_save_mode: "${power_save_mode}"
+
